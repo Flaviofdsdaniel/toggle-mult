@@ -1,0 +1,7 @@
+.aws-docker/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log

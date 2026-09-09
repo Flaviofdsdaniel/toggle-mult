@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: evaluation-service
+  namespace: toggle-mult
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: evaluation-service
+  template:
+    metadata:
+      labels:
+        app: evaluation-service
+    spec:
+      containers:
+        - name: evaluation-service
+          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/togglemaster/evaluation-service
+          ports:
+            - containerPort: 8004
+          
+          envFrom:
+            - configMapRef:
+                name: configmap
+            - secretRef:
+                name: secret-evaluation
+
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "250m"
+              memory: "950Mi"
+
+          

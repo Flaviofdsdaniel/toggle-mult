@@ -1,0 +1,107 @@
+services:
+
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+   # restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgresdb}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgresdb}
+      POSTGRES_DB: ${DB_DATABASE:-postgresdb}
+
+    volumes:
+      - postgres_pg_data:/var/lib/postgresql/data
+      - ./auth-service/db/init.sql:/docker-entrypoint-initdb.d/auth.sql:ro
+      - ./flag-service/db/init.sql:/docker-entrypoint-initdb.d/flag.sql:ro
+      - ./targeting-service/db/init.sql:/docker-entrypoint-initdb.d/targeting.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgresdb -d postgresdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-db:
+    image: redis:7-alpine
+    container_name: redis-db
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./auth-service/Dockerfile
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./auth-service/.env
+    depends_on:
+       postgres-db:
+        condition: service_healthy
+
+  flag-service:
+    build:
+      context: .
+      dockerfile: ./flag-service/Dockerfile
+    ports:
+      - "8002:8002"
+    env_file:
+      - ./flag-service/.env
+    depends_on:
+       postgres-db:
+        condition: service_healthy
+
+  targeting-service:
+    build: 
+      context: .
+      dockerfile: ./targeting-service/Dockerfile
+    ports:
+      - "8003:8003"
+    env_file:
+      - ./targeting-service/.env
+    depends_on:
+       postgres-db:
+        condition: service_healthy
+
+  evaluation-service:
+    build:
+      context: .
+      dockerfile: ./evaluation-service/Dockerfile
+    ports:
+      - "8004:8004"
+    env_file:
+      - ./evaluation-service/.env
+    depends_on:
+       postgres-db:
+        condition: service_healthy
+       redis-db:
+        condition: service_healthy
+    volumes:
+      - ./.aws-docker:/root/.aws:ro
+  
+  analytics-service:
+    build:
+      context: .
+      dockerfile: ./analytics-service/Dockerfile
+    ports:
+      - "8005:8005"
+    env_file:
+      - ./analytics-service/.env
+    depends_on:
+       postgres-db:
+        condition: service_healthy
+       redis-db:
+        condition: service_healthy
+    volumes:
+     - ./.aws-docker:/root/.aws:ro
+    
+
+volumes:
+  postgres_pg_data:

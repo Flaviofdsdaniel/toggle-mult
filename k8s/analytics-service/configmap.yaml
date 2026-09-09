@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: configmap
+  namespace: toggle-mult
+
+data:
+  PORT: "8005"
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/050451396335/evalution-service"
+  AWS_DYNAMODB_TABLE: "ToggleMasterAnalytics"
+  AWS_REGION: "us-east-1"
+  
