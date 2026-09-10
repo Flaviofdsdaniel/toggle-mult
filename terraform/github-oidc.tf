@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "github_actions_trust" {
       variable = "token.actions.githubusercontent.com:sub"
 
       values = [
-        "repo:Flaviofdsdaniel@49292830/ToggleMult@1301089250:ref:refs/heads/main"
+        "repo:Flaviofdsdaniel@49292830/toggle-mult@1363235475:ref:refs/heads/main"
       ]
     }
   }
