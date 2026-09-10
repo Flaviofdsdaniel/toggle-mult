@@ -176,8 +176,14 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: auth-service
         run: |
-          sed -i "s|image: .*auth-service:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG}|" \
+          sed -i "s|image: .*auth-service.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG}|" \
             .github/GitOps/auth-service/deployment.yaml
+
+          echo "Nova imagem configurada:"
+          grep "image:" .github/GitOps/auth-service/deployment.yaml
+
+          echo "Alteracao realizada:"
+          git diff
 
       - name: Commit GitOps update
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -186,6 +192,11 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add .github/GitOps/auth-service/deployment.yaml
+          
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteracao no deployment.yaml"
+            exit 0
+          fi
 
           git commit -m "gitops: update auth-service to ${IMAGE_TAG}"
           git push
