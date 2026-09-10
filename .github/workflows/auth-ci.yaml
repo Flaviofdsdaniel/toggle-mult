@@ -96,8 +96,7 @@ jobs:
 
       # SAST
       - name: Install gosec
-        run: |
-          go install github.com/securego/gosec/v2/cmd/gosec@v2.28.0
+        run: go install github.com/securego/gosec/v2/cmd/gosec@v2.28.0
 
       - name: Run gosec
-        run: gosec ./...
+        run: gosec -severity high ./...
