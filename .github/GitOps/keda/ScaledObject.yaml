@@ -1,0 +1,31 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: scaledobject
+  namespace: toggle-mult
+
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: analytics-service
+
+  pollingInterval: 15
+  cooldownPeriod: 60
+
+  minReplicaCount: 0
+  maxReplicaCount: 5
+
+  triggers:
+    - type: aws-sqs-queue
+
+      authenticationRef:
+        name: sqs-auth
+
+      metadata:
+        queueURL: "https://sqs.us-east-1.amazonaws.com/050451396335/evalution-service"
+        awsRegion: "us-east-1"
+        queueLength: "5"
+        activationQueueLength: "0"
+        scaleOnInFlight: "true"
+        scaleOnDelayed: "false"

@@ -4,13 +4,19 @@ on:
   push:
     branches:
       - main
-  
+    paths:
+      - "auth-service/**"
+      - ".github/workflows/auth-service-ci.yml"
+
   pull_request:
     branches:
       - main
+    paths:
+      - "auth-service/**"
+      - ".github/workflows/auth-service-ci.yml"
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
   
 jobs:
@@ -133,36 +139,6 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
 
-      ################################################################################
-    
-      - name: Show OIDC claims
-        shell: bash
-        run: |
-          TOKEN=$(curl -sS \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" \
-            | jq -r '.value')
-
-          PAYLOAD=$(echo "$TOKEN" | cut -d '.' -f2 | tr '_-' '/+')
-
-          case $((${#PAYLOAD} % 4)) in
-            2) PAYLOAD="${PAYLOAD}==" ;;
-            3) PAYLOAD="${PAYLOAD}=" ;;
-          esac
-
-          echo "$PAYLOAD" | base64 -d 2>/dev/null | jq '{
-            aud,
-            sub,
-            repository,
-            repository_id,
-            repository_owner,
-            repository_owner_id,
-            ref,
-            event_name
-          }'
-
-      ################################################################################
-
       - name: Configure AWS credentials
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: aws-actions/configure-aws-credentials@v6
@@ -193,3 +169,23 @@ jobs:
         run: |
           docker push \
           $ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG}
+
+      - name: Update GitOps image tag
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: auth-service
+        run: |
+          sed -i "s|image: .*auth-service:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG}|" \
+            GitOps/auth-service/deployment.yaml
+
+      - name: Commit GitOps update
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add GitOps/auth-service/deployment.yaml
+
+          git commit -m "gitops: update auth-service to ${IMAGE_TAG}"
+          git push  

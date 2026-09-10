@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: targeting-service
+  namespace: toggle-mult
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: targeting-service
+  template:
+    metadata:
+      labels:
+        app: targeting-service
+    spec:
+      containers:
+        - name: targeting-service
+          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/togglemaster/targeting-service
+          ports:
+            - containerPort: 8003
+          envFrom:
+            - configMapRef:
+                name: configmap
+            - secretRef:
+                name: secret
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+            successThreshold: 1
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
