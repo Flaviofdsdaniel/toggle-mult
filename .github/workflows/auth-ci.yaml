@@ -188,4 +188,4 @@ jobs:
           git add GitOps/auth-service/deployment.yaml
 
           git commit -m "gitops: update auth-service to ${IMAGE_TAG}"
-          git push  
+          git push
