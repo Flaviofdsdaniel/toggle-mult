@@ -6,14 +6,14 @@ on:
       - main
     paths:
       - "auth-service/**"
-      - ".github/workflows/auth-service-ci.yml"
+      - ".github/workflows/auth-ci.yml"
 
   pull_request:
     branches:
       - main
     paths:
       - "auth-service/**"
-      - ".github/workflows/auth-service-ci.yml"
+      - ".github/workflows/auth-ci.yml"
 
 permissions:
   contents: write
