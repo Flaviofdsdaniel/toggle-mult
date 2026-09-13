@@ -59,3 +59,4 @@ func (a *App) evaluationHandler(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		log.Printf("Erro ao codificar resposta JSON: %v", err)
 	}
+}
