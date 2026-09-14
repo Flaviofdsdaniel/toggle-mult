@@ -23,7 +23,7 @@ spec:
           
           envFrom:
             - configMapRef:
-                name: configmap
+                name: evaluation-configmap
             - secretRef:
                 name: secret-evaluation
 

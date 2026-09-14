@@ -21,9 +21,9 @@ spec:
             - containerPort: 8001
           envFrom:
             - configMapRef:
-                name: configmap
+                name: auth-configmap
             - secretRef:
-                name: secret
+                name: auth-secret
 
           resources:
             requests:

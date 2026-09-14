@@ -22,9 +22,9 @@ spec:
             - containerPort: 8003
           envFrom:
             - configMapRef:
-                name: configmap
+                name: targeting-configmap
             - secretRef:
-                name: secret
+                name: targeting-secret
 
           resources:
             requests:

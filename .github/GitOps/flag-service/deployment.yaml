@@ -23,9 +23,9 @@ spec:
 
         envFrom:
           - configMapRef:
-              name: configmap
+              name: flag-configmap
           - secretRef:
-              name: secret
+              name: flag-secret
 
         resources:
           requests:

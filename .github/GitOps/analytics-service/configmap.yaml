@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 
 metadata:
-  name: configmap
+  name: analytics-configmap
   namespace: toggle-mult
 
 data:

@@ -31,7 +31,7 @@ spec:
       project: default
 
       source:
-        repoURL: https://github.com/Flaviofdsdaniel/ToggleMult.git
+        repoURL: https://github.com/Flaviofdsdaniel/Toggle-Mult.git
         targetRevision: main
         path: "{{path}}"
 

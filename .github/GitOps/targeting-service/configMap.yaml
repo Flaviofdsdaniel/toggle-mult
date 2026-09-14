@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 
 metadata:
-  name: configmap
+  name: targeting-configmap
   namespace: toggle-mult
 
 data: 

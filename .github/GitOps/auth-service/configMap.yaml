@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: configmap
+  name: auth-configmap
   namespace: toggle-mult
 data:
   POSTGRES_HOST: togglemaster-postgres.cc9akw4u8gao.us-east-1.rds.amazonaws.com

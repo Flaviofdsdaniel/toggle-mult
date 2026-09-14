@@ -23,7 +23,7 @@ spec:
             - containerPort: 8005
           envFrom:
             - configMapRef:
-                name: configmap
+                name: analytics-configmap
           
           resources:
             requests:
