@@ -16,6 +16,8 @@ spec:
         app: analytics-service
 
     spec:
+      serviceAccountName: analytics-service-sa
+
       containers:
         - name: analytics-service
           image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/analytics-service:8241eab
