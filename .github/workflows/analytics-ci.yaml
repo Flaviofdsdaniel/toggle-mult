@@ -7,6 +7,7 @@ on:
     paths:
       - "analytics-service/**"
       - ".github/workflows/analytics-ci.yml"
+      - ".github/GitOps/analytics-service/**"
 
   pull_request:
     branches:
@@ -14,6 +15,7 @@ on:
     paths:
       - "analytics-service/**"
       - ".github/workflows/analytics-ci.yml"
+      - ".github/GitOps/analytics-service/**"
 
 permissions:
   contents: write
