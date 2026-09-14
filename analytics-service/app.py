@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 import uuid
-# testando subida forçada 
+
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from dotenv import load_dotenv
@@ -133,6 +133,7 @@ def start_worker():
 
 # Inicia o worker SQS em uma thread de background
 # Isso garante que ele inicie tanto com 'flask run' quanto com 'gunicorn'
+# testando subida forçada 
 start_worker()
 
 if __name__ == '__main__':
