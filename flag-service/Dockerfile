@@ -1,4 +1,4 @@
-From python:3.11-slim AS flag-service
+From python:3.13-slim-bookworm
 
 WORKDIR /app
 
