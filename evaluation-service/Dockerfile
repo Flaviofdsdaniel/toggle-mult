@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS evaluation-service
+FROM golang:1.25-alpine
 
 WORKDIR /app
 
