@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "analytics-service/**"
-      - ".github/workflows/analytics-ci.yml"
+      - ".github/workflows/analytics-ci.yaml"
       - ".github/GitOps/analytics-service/**"
 
   pull_request:
