@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS targeting-service
+FROM python:3.13-slim-bookworm
 
 WORKDIR /app
 COPY targeting-service/requirements.txt ./
