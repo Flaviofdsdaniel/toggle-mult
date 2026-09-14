@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 import uuid
-
+# testando subida forçada 
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from dotenv import load_dotenv
