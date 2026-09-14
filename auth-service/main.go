@@ -1,5 +1,5 @@
 package main
-
+// Serviço de Autenticação (Go) para o Toggle Multicloud
 import (
 	"database/sql"
 	//"fmt"

@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: togglemaster-services
+  namespace: argocd
+
+spec:
+  generators:
+    - list:
+        elements:
+          - service: auth-service
+            path: .github/GitOps/auth-service
+
+          - service: flag-service
+            path: .github/GitOps/flag-service
+
+          - service: targeting-service
+            path: .github/GitOps/targeting-service
+
+          - service: evaluation-service
+            path: .github/GitOps/evaluation-service
+
+          - service: analytics-service
+            path: .github/GitOps/analytics-service
+
+  template:
+    metadata:
+      name: "{{service}}"
+
+    spec:
+      project: default
+
+      source:
+        repoURL: https://github.com/Flaviofdsdaniel/ToggleMult.git
+        targetRevision: main
+        path: "{{path}}"
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: toggle-mult
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+
+        syncOptions:
+          - CreateNamespace=true
