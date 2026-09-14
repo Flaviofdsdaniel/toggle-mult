@@ -1,5 +1,5 @@
 name: Auth Service CI
-
+#forçando comit para testar o workflow
 on: 
   push:
     branches:
