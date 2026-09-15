@@ -117,7 +117,7 @@ func (a *App) fetchFlag(flagName string) (*Flag, error) {
 		return nil, fmt.Errorf("erro ao criar requisição para flag-service: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", apiKey)
 
 	// #nosec G704 -- A requisição utiliza exclusivamente o endpoint interno configurado do flag-service.
 	resp, err := a.HttpClient.Do(req)
@@ -164,7 +164,7 @@ func (a *App) fetchRule(flagName string) (*TargetingRule, error) {
 		return nil, fmt.Errorf("erro ao criar requisição para targeting-service: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", apiKey)
 
 	// #nosec G704 -- A requisição utiliza exclusivamente o endpoint interno configurado do targeting-service.
 	resp, err := a.HttpClient.Do(req)
