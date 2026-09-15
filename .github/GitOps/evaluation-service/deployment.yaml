@@ -18,7 +18,7 @@ spec:
       serviceAccountName: evaluation-service-sa
       containers:
         - name: evaluation-service
-          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:daab2f9
+          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/evaluation-service:de8e882
           ports:
             - containerPort: 8004
           
