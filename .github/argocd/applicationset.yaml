@@ -23,6 +23,9 @@ spec:
           - service: analytics-service
             path: .github/GitOps/analytics-service
 
+          - service: keda
+            path: .github/GitOps/keda
+
   template:
     metadata:
       name: "{{service}}"

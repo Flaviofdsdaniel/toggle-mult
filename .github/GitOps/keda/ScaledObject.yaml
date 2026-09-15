@@ -23,9 +23,6 @@ spec:
         name: sqs-auth
 
       metadata:
-        queueURL: "https://sqs.us-east-1.amazonaws.com/050451396335/evalution-service"
+        queueURL: "https://sqs.us-east-1.amazonaws.com/050451396335/ToggleMasterAnalyticsQueue"
         awsRegion: "us-east-1"
         queueLength: "5"
-        activationQueueLength: "0"
-        scaleOnInFlight: "true"
-        scaleOnDelayed: "false"

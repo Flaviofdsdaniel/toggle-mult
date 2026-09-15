@@ -128,3 +128,50 @@ resource "aws_eks_pod_identity_association" "analytics" {
 
   role_arn = aws_iam_role.analytics.arn
 }
+
+# KEDA OPERATOR
+
+resource "aws_iam_role" "keda" {
+  name = "ToggleMaster-KEDA-Role"
+
+  assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
+}
+
+data "aws_iam_policy_document" "keda" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "sqs:GetQueueAttributes",
+      "sqs:GetQueueUrl"
+    ]
+
+    resources = [
+      module.sqs.queue_arn
+    ]
+  }
+}
+
+resource "aws_iam_policy" "keda" {
+  name = "ToggleMaster-KEDA-Policy"
+
+  policy = data.aws_iam_policy_document.keda.json
+}
+
+resource "aws_iam_role_policy_attachment" "keda" {
+  role       = aws_iam_role.keda.name
+  policy_arn = aws_iam_policy.keda.arn
+}
+
+resource "aws_eks_pod_identity_association" "keda" {
+  cluster_name = module.eks.cluster_name
+
+  namespace       = "keda"
+  service_account = "keda-operator"
+
+  role_arn = aws_iam_role.keda.arn
+
+  depends_on = [
+    helm_release.keda
+  ]
+}

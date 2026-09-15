@@ -5,11 +5,6 @@ metadata:
   namespace: toggle-mult
 
 spec:
-  secretTargetRef:
-    - parameter: awsAccessKeyID
-      name: sqs-secret
-      key: AWS_ACCESS_KEY_ID
-
-    - parameter: awsSecretAccessKey
-      name: sqs-secret
-      key: AWS_SECRET_ACCESS_KEY
+  podIdentity:
+    provider: aws
+    identityOwner: keda
