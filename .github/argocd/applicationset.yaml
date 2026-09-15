@@ -26,6 +26,9 @@ spec:
           - service: keda
             path: .github/GitOps/keda
 
+          - service: ingress
+            path: .github/GitOps/ingress
+
   template:
     metadata:
       name: "{{service}}"
