@@ -12,5 +12,5 @@ data:
   TARGETING_SERVICE_URL: "http://targeting-service:8003"
 
 #Conexão com a fila SQS da AWS
-  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/050451396335/evaluation-service"
+  AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/050451396335/ToggleMasterAnalyticsQueue"
   AWS_REGION: "us-east-1"
