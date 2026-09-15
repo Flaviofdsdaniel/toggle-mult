@@ -11,7 +11,22 @@ spec:
     name: evaluation-service
 
   minReplicas: 1
-  maxReplicas: 5  
+  maxReplicas: 5 
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60 
 
   metrics:
     - type: Resource
