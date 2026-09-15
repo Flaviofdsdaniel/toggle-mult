@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"crypto/tls"
-	"net/http"
+	// "crypto/tls"
+	// "net/http"
 )
 
 // generateAPIKey cria uma string aleatória segura de 32 bytes
@@ -25,12 +25,12 @@ func hashAPIKey(key string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-func insecureClientDemo() *http.Client {
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+// func insecureClientDemo() *http.Client {
+// 	return &http.Client{
+// 		Transport: &http.Transport{
+// 			TLSClientConfig: &tls.Config{
+// 				InsecureSkipVerify: true,
+// 			},
+// 		},
+// 	}
 }
