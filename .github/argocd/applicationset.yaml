@@ -29,6 +29,9 @@ spec:
           - service: ingress
             path: .github/GitOps/ingress
 
+          - service: secrets
+            path: .github/GitOps/secrets
+
   template:
     metadata:
       name: "{{service}}"

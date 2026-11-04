@@ -24,7 +24,7 @@ spec:
             - configMapRef:
                 name: configmap
             - secretRef:
-                name: secret
+                name: targeting-secret
 
           resources:
             requests:

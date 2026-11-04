@@ -34,6 +34,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   timeout = 600
 
   depends_on = [
+    module.eks,
     aws_eks_pod_identity_association.load_balancer_controller
   ]
 }

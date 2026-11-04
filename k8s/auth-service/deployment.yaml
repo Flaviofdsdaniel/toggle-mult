@@ -23,7 +23,7 @@ spec:
             - configMapRef:
                 name: configmap
             - secretRef:
-                name: secret
+                name: auth-secret
 
           resources:
             requests:

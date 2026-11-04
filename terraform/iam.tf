@@ -205,3 +205,54 @@ resource "aws_eks_pod_identity_association" "load_balancer_controller" {
 
   role_arn = aws_iam_role.load_balancer_controller.arn
 }
+
+# EXTERNAL SECRETS OPERATOR
+
+resource "aws_iam_role" "external_secrets" {
+  name = "ToggleMaster-ExternalSecrets-Role"
+
+  assume_role_policy = data.aws_iam_policy_document.pod_identity_trust.json
+}
+
+data "aws_iam_policy_document" "external_secrets" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetResourcePolicy",
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+      "secretsmanager:ListSecretVersionIds"
+    ]
+
+    resources = concat(
+      [
+        module.rds.db_instance_master_user_secret_arn
+      ],
+      [
+        for secret in aws_secretsmanager_secret.application : secret.arn
+      ]
+    )
+  }
+}
+
+resource "aws_iam_policy" "external_secrets" {
+  name   = "ToggleMaster-ExternalSecrets-Policy"
+  policy = data.aws_iam_policy_document.external_secrets.json
+}
+
+resource "aws_iam_role_policy_attachment" "external_secrets" {
+  role       = aws_iam_role.external_secrets.name
+  policy_arn = aws_iam_policy.external_secrets.arn
+}
+
+resource "aws_eks_pod_identity_association" "external_secrets" {
+  cluster_name    = module.eks.cluster_name
+  namespace       = "external-secrets"
+  service_account = "external-secrets"
+  role_arn        = aws_iam_role.external_secrets.arn
+
+  depends_on = [
+    helm_release.external_secrets
+  ]
+}
