@@ -13,6 +13,7 @@ resource "helm_release" "keda" {
   cleanup_on_fail = true
 
   depends_on = [
-    module.eks
+    module.eks,
+    helm_release.aws_load_balancer_controller
   ]
 }

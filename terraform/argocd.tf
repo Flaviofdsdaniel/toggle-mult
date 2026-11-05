@@ -33,6 +33,7 @@ resource "helm_release" "argocd" {
   ]
 
   depends_on = [
-    module.eks
+    module.eks,
+    helm_release.aws_load_balancer_controller
   ]
 }
