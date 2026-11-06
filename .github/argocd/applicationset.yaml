@@ -32,6 +32,9 @@ spec:
           - service: secrets
             path: .github/GitOps/secrets
 
+  syncPolicy:
+    preserveResourcesOnDeletion: false
+
   template:
     metadata:
       name: "{{service}}"

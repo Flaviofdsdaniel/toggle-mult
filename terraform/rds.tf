@@ -1,5 +1,6 @@
 module "rds" {
-  source = "terraform-aws-modules/rds/aws"
+  source  = "terraform-aws-modules/rds/aws"
+  version = "7.2.1"
 
   identifier = "togglemaster-postgres"
 

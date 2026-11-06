@@ -1,5 +1,6 @@
 module "redis" {
-  source = "terraform-aws-modules/elasticache/aws"
+  source  = "terraform-aws-modules/elasticache/aws"
+  version = "1.11.1"
 
   replication_group_id = "togglemaster-redis"
 

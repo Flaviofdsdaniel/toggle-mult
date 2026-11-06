@@ -1,5 +1,6 @@
 module "sqs" {
-  source = "terraform-aws-modules/sqs/aws"
+  source  = "terraform-aws-modules/sqs/aws"
+  version = "5.2.2"
 
   name = "ToggleMasterAnalyticsQueue"
 

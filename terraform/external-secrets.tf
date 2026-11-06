@@ -39,5 +39,8 @@ locals {
 resource "aws_secretsmanager_secret" "application" {
   for_each = local.application_secret_names
 
-  name = "toggle-mult/${each.value}"
+  # This is a disposable lab stack: remove names immediately so the next apply
+  # can recreate them. Secret values must be entered again after recreation.
+  name                    = "toggle-mult/${each.value}"
+  recovery_window_in_days = 0
 }

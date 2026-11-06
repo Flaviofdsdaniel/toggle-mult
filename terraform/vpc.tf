@@ -1,5 +1,6 @@
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "6.7.0"
 
   name = "vpc-togglemaster"
   cidr = "10.0.0.0/16"
@@ -10,7 +11,7 @@ module "vpc" {
 
   enable_nat_gateway = true
   single_nat_gateway = true
-  enable_vpn_gateway = true
+  enable_vpn_gateway = false
 
   tags = {
     Terraform   = "true"

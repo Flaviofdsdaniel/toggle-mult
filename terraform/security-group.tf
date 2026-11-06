@@ -1,5 +1,6 @@
 module "security_group" {
-  source = "terraform-aws-modules/security-group/aws"
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "6.0.0"
 
   name        = "sgtogglemaster"
   description = "Security group for ToggleMaster"
