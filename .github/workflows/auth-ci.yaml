@@ -201,4 +201,16 @@ jobs:
           fi
 
           git commit -m "gitops: update auth-service to ${IMAGE_TAG}"
-          git push
+          for attempt in 1 2 3 4 5; do
+            git fetch origin
+            git rebase origin/main
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            echo "Push concorreu com outro workflow; tentando novamente..."
+            sleep $((attempt * 2))
+          done
+
+          exit 1
