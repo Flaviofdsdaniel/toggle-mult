@@ -133,3 +133,5 @@ func (a *App) masterKeyAuthMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+//subindo codigo para reste auth
