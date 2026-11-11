@@ -32,6 +32,12 @@ spec:
           - service: secrets
             path: .github/GitOps/secrets
 
+          - service: observability-bootstrap
+            path: .github/GitOps/observability/stack
+
+          - service: observability-secrets
+            path: .github/GitOps/observability
+
   syncPolicy:
     preserveResourcesOnDeletion: false
 

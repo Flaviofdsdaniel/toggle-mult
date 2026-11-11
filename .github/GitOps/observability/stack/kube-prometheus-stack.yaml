@@ -1,0 +1,84 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observability-stack
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 93.1.0
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        grafana:
+          persistence:
+            enabled: false
+          ingress:
+            enabled: false
+          service:
+            type: ClusterIP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+
+        prometheus:
+          prometheusSpec:
+            retention: 24h
+            replicas: 1
+            resources:
+              requests:
+                cpu: 200m
+                memory: 512Mi
+              limits:
+                cpu: 500m
+                memory: 1Gi
+
+        alertmanager:
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              group_by: ["alertname"]
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+              receiver: jira-discord
+            receivers:
+              - name: jira-discord
+                opsgenie_configs:
+                  - api_key_file: /etc/alertmanager/secrets/observability-credentials/JIRA_PROMETHEUS_API_KEY
+                    api_url: https://api.atlassian.com/jsm/ops/integration/
+                    send_resolved: true
+                discord_configs:
+                  - webhook_url_file: /etc/alertmanager/secrets/observability-credentials/DISCORD_WEBHOOK_URL
+                    send_resolved: true
+          alertmanagerSpec:
+            replicas: 1
+            secrets:
+              - observability-credentials
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

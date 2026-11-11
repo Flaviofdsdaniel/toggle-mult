@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: observability-newrelic
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://helm-charts.newrelic.com
+    chart: nri-bundle
+    targetRevision: 8.0.40
+    helm:
+      releaseName: newrelic-bundle
+      values: |
+        global:
+          cluster: ToggleMaster
+          lowDataMode: true
+          customSecretName: observability-credentials
+          customSecretLicenseKey: NEW_RELIC_LICENSE_KEY
+
+        newrelic-infrastructure:
+          enabled: true
+          ksm:
+            config:
+              selector: "app.kubernetes.io/name=kube-state-metrics"
+
+        kube-state-metrics:
+          enabled: false
+
+        nri-kube-events:
+          enabled: true
+
+        nri-metadata-injection:
+          enabled: false
+
+        newrelic-logging:
+          enabled: false
+
+        nri-prometheus:
+          enabled: false
+
+        newrelic-prometheus-agent:
+          enabled: false
+
+        k8s-agents-operator:
+          enabled: false
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: observability
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

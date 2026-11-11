@@ -32,7 +32,8 @@ locals {
     "auth-service",
     "flag-service",
     "targeting-service",
-    "evaluation-service"
+    "evaluation-service",
+    "observability"
   ])
 }
 
