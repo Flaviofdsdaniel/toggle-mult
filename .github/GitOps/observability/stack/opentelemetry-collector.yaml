@@ -78,6 +78,9 @@ spec:
 
             prometheus:
               endpoint: ${env:MY_POD_IP}:8889
+              resource_constant_labels:
+                included:
+                  - service.name
 
           service:
             extensions:
