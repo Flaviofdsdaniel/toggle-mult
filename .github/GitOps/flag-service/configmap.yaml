@@ -8,3 +8,11 @@ metadata:
 data:
   PORT: "8002"
   AUTH_SERVICE_URL: http://auth-service:8001
+
+# conexão com o collector para enviar dados de telemetria
+  OTEL_SERVICE_NAME: "flag-service"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-collector.observability.svc.cluster.local:4318"
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_EXPORTER: "otlp"
+  OTEL_METRICS_EXPORTER: "otlp"
+  OTEL_LOGS_EXPORTER: "none"

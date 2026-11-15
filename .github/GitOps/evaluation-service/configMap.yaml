@@ -14,3 +14,6 @@ data:
 #Conexão com a fila SQS da AWS
   AWS_SQS_URL: "https://sqs.us-east-1.amazonaws.com/050451396335/ToggleMasterAnalyticsQueue"
   AWS_REGION: "us-east-1"
+
+#Endereço que o collecto espera para receber os dados de telemetria
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-collector.observability.svc.cluster.local:4318"

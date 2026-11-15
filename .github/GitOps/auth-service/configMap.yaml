@@ -7,5 +7,7 @@ data:
   POSTGRES_HOST: togglemaster-postgres.cc9akw4u8gao.us-east-1.rds.amazonaws.com
   POSTGRES_PORT: "5432"
   POSTGRES_DB: postgres
-  
+# openTelemetry configuration
+  OTEL_SERVICE_NAME: "auth-service"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://opentelemetry-collector.observability.svc.cluster.local:4318"
   

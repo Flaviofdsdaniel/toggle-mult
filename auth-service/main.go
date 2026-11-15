@@ -1,4 +1,5 @@
 package main
+
 // Serviço de Autenticação (Go) para o Toggle Multicloud
 import (
 	"database/sql"
@@ -7,19 +8,40 @@ import (
 	"net/http"
 	"os"
 
+	"context"
+	"time"
+
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/joho/godotenv"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // App struct (para injeção de dependência)
 type App struct {
-	DB         *sql.DB
-	MasterKey  string
+	DB        *sql.DB
+	MasterKey string
 }
 
 func main() {
 	// Carrega o .env para desenvolvimento local. Em produção, isso não fará nada.
 	_ = godotenv.Load()
+
+	tracerProvider, meterProvider, err := initTelemetry(context.Background())
+	if err != nil {
+		log.Fatalf("Não foi possível inicializar o OpenTelemetry: %v", err)
+	}
+
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err := tracerProvider.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Erro ao encerrar o OpenTelemetry: %v", err)
+		}
+		if err := meterProvider.Shutdown(shutdownCtx); err != nil {
+			log.Printf("Erro ao encerrar as métricas do OpenTelemetry: %v", err)
+		}
+	}()
 
 	// --- Configuração ---
 	port := os.Getenv("PORT")
@@ -49,20 +71,35 @@ func main() {
 	}()
 
 	app := &App{
-		DB:         db,
-		MasterKey:  masterKey,
+		DB:        db,
+		MasterKey: masterKey,
 	}
 
 	// --- Rotas da API ---
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", app.healthHandler)
+
+	mux.Handle("/health", otelhttp.NewHandler(
+		http.HandlerFunc(app.healthHandler),
+		"/health",
+	))
+
+	mux.Handle("/validate", otelhttp.NewHandler(
+		http.HandlerFunc(app.validateKeyHandler),
+		"/validate",
+	))
+
+	mux.Handle("/admin/keys", otelhttp.NewHandler(
+		app.masterKeyAuthMiddleware(http.HandlerFunc(app.createKeyHandler)),
+		"/admin/keys",
+	))
+	//mux.HandleFunc("/health", app.healthHandler)
 
 	// Endpoint público para validar uma chave
-	mux.HandleFunc("/validate", app.validateKeyHandler)
+	//mux.HandleFunc("/validate", app.validateKeyHandler)
 
 	// Endpoints de "admin" para criar/gerenciar chaves
 	// Eles são protegidos pelo middleware de autenticação
-	mux.Handle("/admin/keys", app.masterKeyAuthMiddleware(http.HandlerFunc(app.createKeyHandler)))
+	//mux.Handle("/admin/keys", app.masterKeyAuthMiddleware(http.HandlerFunc(app.createKeyHandler)))
 
 	log.Printf("Serviço de Autenticação (Go) rodando na porta %s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
