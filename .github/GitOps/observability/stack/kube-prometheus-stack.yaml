@@ -50,6 +50,7 @@ spec:
               group_interval: 5m
               repeat_interval: 4h
               receiver: jira-discord
+              routes: []
             receivers:
               - name: jira-discord
                 opsgenie_configs:
