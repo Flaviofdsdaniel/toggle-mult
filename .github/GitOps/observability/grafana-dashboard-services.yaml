@@ -1,3 +1,5 @@
+# ConfigMap consumido pelo sidecar do Grafana e sincronizado pelo Argo CD via GitOps.
+# Contém um dashboard Grafana em JSON estrito; comentários por painel ficam no campo description.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,6 +10,13 @@ metadata:
   annotations:
     argocd.argoproj.io/tracking-id: observability-secrets:/ConfigMap:observability/togglemaster-requests-dashboard
 data:
+  # Dashboard único para a Fase 4, reunindo as quatro visões pedidas:
+  # 1. Requisições HTTP por microsserviço.
+  # 2. Saúde dos deployments por réplicas desejadas e disponíveis.
+  # 3. Uso de CPU por nó.
+  # 4. Uso de memória por nó.
+  # 5. Logs recentes de contêineres do namespace toggle-mult via Loki.
+  # A descrição individual de cada painel está no JSON abaixo.
   togglemaster-requests-by-service.json: |-
     {
       "__inputs": [],
@@ -138,7 +147,201 @@ data:
             }
           ],
           "title": "Taxa de requisições HTTP por serviço",
+          "type": "timeseries",
+          "description": "Taxa de requisições HTTP por microsserviço, calculada com rate em janela de 5 minutos. Combina os nomes de métricas emitidos pelas instrumentações Go e Python."
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "color": {
+                "mode": "palette-classic"
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 9
+          },
+          "id": 2,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          },
+          "pluginVersion": "13.3.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "kube_deployment_spec_replicas{namespace=\"toggle-mult\"}",
+              "legendFormat": "{{deployment}} desejadas",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "kube_deployment_status_replicas_available{namespace=\"toggle-mult\"}",
+              "legendFormat": "{{deployment}} disponíveis",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "Saúde dos serviços — réplicas desejadas e disponíveis",
+          "type": "timeseries",
+          "description": "Compara réplicas desejadas e disponíveis por deployment no namespace toggle-mult. analytics-service pode mostrar zero desejadas e zero disponíveis quando escalado a zero."
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Percentual aproximado de CPU ocupado por nó. Calculado como 100 menos a fração média de tempo ocioso em uma janela de 5 minutos.",
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 17
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+              "legendFormat": "{{instance}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Uso de CPU por nó",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "description": "Percentual de memória usada por nó, calculado com a memória total menos a memória disponível.",
+          "fieldConfig": {
+            "defaults": {
+              "min": 0,
+              "max": 100,
+              "unit": "percent"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 17
+          },
+          "id": 4,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
+              "editorMode": "code",
+              "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+              "legendFormat": "{{instance}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Uso de memória por nó",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "cg4f3eskkgx6oa"
+          },
+          "description": "Exibe logs recentes dos contêineres no namespace toggle-mult. O dashboard atualiza automaticamente a cada 30 segundos.",
+          "gridPos": {
+            "h": 12,
+            "w": 24,
+            "x": 0,
+            "y": 25
+          },
+          "id": 5,
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "cg4f3eskkgx6oa"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "{instance=~\"toggle-mult/.*\"}",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Logs recentes — ToggleMult",
+          "type": "logs"
         }
       ],
       "refresh": "30s",
@@ -158,5 +361,6 @@ data:
       "timezone": "browser",
       "title": "ToggleMaster — Requisições por serviço",
       "uid": "togglemaster-requests-by-service",
-      "version": 1
+      "version": 1,
+      "description": "Visão operacional do ToggleMaster: taxa de requisições, saúde dos deployments, uso de CPU e memória por nó e logs recentes via Loki."
     }
