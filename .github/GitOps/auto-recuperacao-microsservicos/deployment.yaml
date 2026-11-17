@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auto-recuperacao-microsservicos
+  namespace: observability
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-recuperacao-microsservicos
+  namespace: observability
+  labels:
+    app: auto-recuperacao-microsservicos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auto-recuperacao-microsservicos
+  template:
+    metadata:
+      labels:
+        app: auto-recuperacao-microsservicos
+    spec:
+      serviceAccountName: auto-recuperacao-microsservicos
+      containers:
+        - name: auto-recuperacao-microsservicos
+          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/auto-recuperacao-microsservicos:bootstrap
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auto-recuperacao-microsservicos
+  namespace: observability
+spec:
+  type: ClusterIP
+  selector:
+    app: auto-recuperacao-microsservicos
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: auto-recuperacao-microsservicos
+  namespace: toggle-mult
+rules:
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    resourceNames:
+      - auth-service
+      - flag-service
+      - evaluation-service
+      - analytics-service
+      - targeting-service
+    verbs:
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auto-recuperacao-microsservicos
+  namespace: toggle-mult
+subjects:
+  - kind: ServiceAccount
+    name: auto-recuperacao-microsservicos
+    namespace: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: auto-recuperacao-microsservicos

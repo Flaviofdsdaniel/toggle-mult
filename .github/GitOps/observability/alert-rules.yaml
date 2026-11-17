@@ -9,14 +9,14 @@ spec:
   groups:
     - name: togglemaster.workloads
       rules:
-        - alert: ToggleMultDeploymentUnavailable
+        - alert: MicrosservicoIndisponivel
           expr: kube_deployment_status_replicas_unavailable{namespace="toggle-mult"} > 0
           for: 5m
           labels:
             severity: warning
           annotations:
-            summary: Deployment com réplicas indisponíveis
-            description: 'O Deployment {{ $labels.deployment }} no namespace {{ $labels.namespace }} está com réplicas indisponíveis há mais de 5 minutos.'
+            summary: Microsserviço indisponível
+            description: 'O microsserviço {{ $labels.deployment }} no namespace {{ $labels.namespace }} está com réplicas indisponíveis há mais de 5 minutos. A automação tentará reiniciá-lo.'
     - name: togglemaster.application
       rules:
         - alert: AuthErros5xx

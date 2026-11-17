@@ -50,6 +50,10 @@ spec:
               group_interval: 5m
               repeat_interval: 4h
               receiver: jira-discord
+              routes:
+                - receiver: auto-recuperacao-microsservicos
+                  matchers:
+                    - alertname="MicrosservicoIndisponivel"
             receivers:
               - name: jira-discord
                 opsgenie_configs:
@@ -60,6 +64,17 @@ spec:
                   - webhook_url_file: /etc/alertmanager/secrets/observability-credentials/DISCORD_WEBHOOK_URL
                     send_resolved: true
               - name: "null"
+              - name: auto-recuperacao-microsservicos
+                opsgenie_configs:
+                  - api_key_file: /etc/alertmanager/secrets/observability-credentials/JIRA_PROMETHEUS_API_KEY
+                    api_url: https://api.atlassian.com/jsm/ops/integration/
+                    send_resolved: true
+                discord_configs:
+                  - webhook_url_file: /etc/alertmanager/secrets/observability-credentials/DISCORD_WEBHOOK_URL
+                    send_resolved: true
+                webhook_configs:
+                  - url: http://auto-recuperacao-microsservicos.observability.svc.cluster.local:8080/alerts
+                    send_resolved: false
           alertmanagerSpec:
             replicas: 1
             secrets:

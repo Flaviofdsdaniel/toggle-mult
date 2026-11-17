@@ -4,7 +4,8 @@ locals {
     "flag-service",
     "evaluation-service",
     "analytics-service",
-    "targeting-service"
+    "targeting-service",
+    "auto-recuperacao-microsservicos"
   ])
 }
 

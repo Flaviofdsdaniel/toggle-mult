@@ -38,6 +38,9 @@ spec:
           - service: observability-secrets
             path: .github/GitOps/observability
 
+          - service: auto-recuperacao-microsservicos
+            path: .github/GitOps/auto-recuperacao-microsservicos
+
   syncPolicy:
     preserveResourcesOnDeletion: false
 

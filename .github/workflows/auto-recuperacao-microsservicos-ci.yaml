@@ -1,0 +1,113 @@
+name: Auto Recuperação Microsserviços CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "auto-recuperacao-microsservicos/**"
+      - ".github/workflows/auto-recuperacao-microsservicos-ci.yaml"
+      - ".github/GitOps/auto-recuperacao-microsservicos/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "auto-recuperacao-microsservicos/**"
+      - ".github/workflows/auto-recuperacao-microsservicos-ci.yaml"
+      - ".github/GitOps/auto-recuperacao-microsservicos/**"
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build e análise da automação
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Compilar
+        working-directory: auto-recuperacao-microsservicos
+        run: go build ./...
+
+      - name: Construir imagem
+        run: |
+          IMAGE_TAG="${GITHUB_SHA::7}"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+          docker build \
+            -f auto-recuperacao-microsservicos/Dockerfile \
+            -t auto-recuperacao-microsservicos:"$IMAGE_TAG" \
+            .
+
+  publish:
+    name: Publicar imagem e atualizar GitOps
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Definir tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Construir imagem
+        run: |
+          docker build \
+            -f auto-recuperacao-microsservicos/Dockerfile \
+            -t auto-recuperacao-microsservicos:"$IMAGE_TAG" \
+            .
+
+      - name: Configurar credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::050451396335:role/GitHubActionsECRRole
+          aws-region: us-east-1
+
+      - name: Login no ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Enviar imagem ao ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: auto-recuperacao-microsservicos
+        run: |
+          docker tag auto-recuperacao-microsservicos:"$IMAGE_TAG" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Atualizar imagem GitOps
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: auto-recuperacao-microsservicos
+        run: |
+          sed -i "s|image: .*auto-recuperacao-microsservicos:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|" \
+            .github/GitOps/auto-recuperacao-microsservicos/deployment.yaml
+
+      - name: Commit e push GitOps
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/GitOps/auto-recuperacao-microsservicos/deployment.yaml
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração GitOps necessária"
+            exit 0
+          fi
+          git commit -m "gitops: atualiza auto-recuperacao-microsservicos para ${IMAGE_TAG}"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push concorrente; nova tentativa..."
+            sleep $((attempt * 2))
+          done
+          exit 1
