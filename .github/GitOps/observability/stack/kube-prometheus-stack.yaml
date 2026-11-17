@@ -53,7 +53,7 @@ spec:
               routes:
                 - receiver: auto-recuperacao-microsservicos
                   matchers:
-                    - alertname="MicrosservicoIndisponivel"
+                    - alertname="RollbackVersaoDeDeploy"
             receivers:
               - name: jira-discord
                 opsgenie_configs:

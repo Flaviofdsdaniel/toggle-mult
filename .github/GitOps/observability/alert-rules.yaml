@@ -16,7 +16,17 @@ spec:
             severity: warning
           annotations:
             summary: Microsserviço indisponível
-            description: 'O microsserviço {{ $labels.deployment }} no namespace {{ $labels.namespace }} está com réplicas indisponíveis há mais de 5 minutos. A automação tentará reiniciá-lo.'
+            description: 'O microsserviço {{ $labels.deployment }} no namespace {{ $labels.namespace }} está com réplicas indisponíveis há mais de 5 minutos.'
+    - name: togglemaster.deployments
+      rules:
+        - alert: RollbackVersaoDeDeploy
+          expr: kube_deployment_status_condition{namespace="toggle-mult", condition="Progressing", status="false"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: Rollout travado em {{ $labels.deployment }}
+            description: 'O rollout do microsserviço {{ $labels.deployment }} ultrapassou o prazo de progresso. A automação vai restaurar a imagem anterior pelo GitOps.'
     - name: togglemaster.application
       rules:
         - alert: AuthErros5xx
