@@ -17,3 +17,21 @@ spec:
           annotations:
             summary: Deployment com réplicas indisponíveis
             description: 'O Deployment {{ $labels.deployment }} no namespace {{ $labels.namespace }} está com réplicas indisponíveis há mais de 5 minutos.'
+    - name: togglemaster.application
+      rules:
+        - alert: AuthErros5xx
+          expr: |
+            (
+              sum(rate(http_server_request_duration_seconds_count{service_name="auth-service", http_response_status_code=~"5.."}[5m]))
+              /
+              sum(rate(http_server_request_duration_seconds_count{service_name="auth-service"}[5m]))
+            ) > 0.05
+            and
+            sum(rate(http_server_request_duration_seconds_count{service_name="auth-service"}[5m])) > 0
+          for: 1m
+          labels:
+            severity: warning
+            service: auth-service
+          annotations:
+            summary: Taxa elevada de erros HTTP 5xx no auth-service
+            description: 'Mais de 5% das requisições HTTP do auth-service falharam com status 5xx nos últimos 5 minutos. Proporção observada: {{ $value }}.'
