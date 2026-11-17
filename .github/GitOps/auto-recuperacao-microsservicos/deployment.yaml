@@ -24,7 +24,7 @@ spec:
       serviceAccountName: auto-recuperacao-microsservicos
       containers:
         - name: auto-recuperacao-microsservicos
-          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/auto-recuperacao-microsservicos:bootstrap
+          image: 050451396335.dkr.ecr.us-east-1.amazonaws.com/auto-recuperacao-microsservicos:7d67dd0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
