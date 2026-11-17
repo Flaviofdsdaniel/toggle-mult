@@ -41,7 +41,7 @@ type alertmanagerWebhook struct {
 }
 
 type deploymentImageResolver interface {
-	currentImage(context.Context, string) (string, error)
+	currentImage(context.Context, string) (string, bool, error)
 }
 
 type rollbackDispatcher interface {
@@ -143,7 +143,7 @@ func (h *alertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		image, err := h.images.currentImage(r.Context(), deployment)
+		image, fullyRolledOut, err := h.images.currentImage(r.Context(), deployment)
 		if err != nil {
 			log.Printf("falha ao consultar imagem atual de %s/%s: %v", workloadNS, deployment, err)
 			http.Error(w, "falha ao consultar a versão atual do microsserviço", http.StatusBadGateway)
@@ -151,6 +151,10 @@ func (h *alertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if strings.TrimSpace(image) == "" {
 			log.Printf("alerta ignorado: imagem atual ausente para %s/%s", workloadNS, deployment)
+			continue
+		}
+		if fullyRolledOut {
+			log.Printf("rollback ignorado: %s/%s já está na versão desejada e saudável", workloadNS, deployment)
 			continue
 		}
 
@@ -249,32 +253,33 @@ func newInClusterClient() (*inClusterClient, error) {
 	}, nil
 }
 
-func (c *inClusterClient) currentImage(ctx context.Context, deployment string) (string, error) {
+func (c *inClusterClient) currentImage(ctx context.Context, deployment string) (string, bool, error) {
 	url := fmt.Sprintf("https://%s:%s/apis/apps/v1/namespaces/%s/deployments/%s", c.host, c.port, workloadNS, deployment)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return "", fmt.Errorf("criar consulta ao Kubernetes: %w", err)
+		return "", false, fmt.Errorf("criar consulta ao Kubernetes: %w", err)
 	}
 	return c.getImage(req)
 }
 
-func (c *inClusterClient) getImage(req *http.Request) (string, error) {
+func (c *inClusterClient) getImage(req *http.Request) (string, bool, error) {
 	token := strings.TrimSpace(readFile(c.tokenPath))
 	if token == "" {
-		return "", fmt.Errorf("token da ServiceAccount ausente")
+		return "", false, fmt.Errorf("token da ServiceAccount ausente")
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("consultar API do Kubernetes: %w", err)
+		return "", false, fmt.Errorf("consultar API do Kubernetes: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		response, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", fmt.Errorf("API do Kubernetes retornou %s: %s", resp.Status, strings.TrimSpace(string(response)))
+		return "", false, fmt.Errorf("API do Kubernetes retornou %s: %s", resp.Status, strings.TrimSpace(string(response)))
 	}
 	var deployment struct {
 		Spec struct {
+			Replicas *int32 `json:"replicas"`
 			Template struct {
 				Spec struct {
 					Containers []struct {
@@ -284,19 +289,33 @@ func (c *inClusterClient) getImage(req *http.Request) (string, error) {
 				} `json:"spec"`
 			} `json:"template"`
 		} `json:"spec"`
+		Status struct {
+			Replicas          int32 `json:"replicas"`
+			UpdatedReplicas   int32 `json:"updatedReplicas"`
+			ReadyReplicas     int32 `json:"readyReplicas"`
+			AvailableReplicas int32 `json:"availableReplicas"`
+		} `json:"status"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&deployment); err != nil {
-		return "", fmt.Errorf("decodificar Deployment: %w", err)
+		return "", false, fmt.Errorf("decodificar Deployment: %w", err)
 	}
+	replicas := int32(1)
+	if deployment.Spec.Replicas != nil {
+		replicas = *deployment.Spec.Replicas
+	}
+	fullyRolledOut := replicas == 0 || (deployment.Status.Replicas == replicas &&
+		deployment.Status.UpdatedReplicas >= replicas &&
+		deployment.Status.ReadyReplicas >= replicas &&
+		deployment.Status.AvailableReplicas >= replicas)
 	for _, container := range deployment.Spec.Template.Spec.Containers {
 		if container.Name == deploymentNameFromURL(req.URL.Path) {
-			return container.Image, nil
+			return container.Image, fullyRolledOut, nil
 		}
 	}
 	if len(deployment.Spec.Template.Spec.Containers) == 1 {
-		return deployment.Spec.Template.Spec.Containers[0].Image, nil
+		return deployment.Spec.Template.Spec.Containers[0].Image, fullyRolledOut, nil
 	}
-	return "", fmt.Errorf("container do Deployment não encontrado")
+	return "", false, fmt.Errorf("container do Deployment não encontrado")
 }
 
 func deploymentNameFromURL(path string) string {

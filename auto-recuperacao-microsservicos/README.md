@@ -4,6 +4,8 @@ Quando Prometheus identifica um Deployment cujo rollout passou de `ProgressDeadl
 
 O rollback só altera o manifesto do serviço permitido. Um alerta atrasado é ignorado se a imagem do Git já tiver avançado. A conta de serviço Kubernetes tem apenas leitura dos Deployments permitidos; ela não altera o cluster.
 
+Notificações repetidas são ignoradas quando o Deployment já terminou de aplicar a imagem desejada e tem todas as réplicas prontas. Isso evita que um alerta ainda não resolvido reverta novamente para a versão que acabou de falhar.
+
 ## Credencial necessária
 
 Crie um fine-grained personal access token restrito ao repositório `Flaviofdsdaniel/toggle-mult`, com permissão `Contents: Read and write`, para a API `POST /repos/{owner}/{repo}/dispatches`. Não grave o token no Git.

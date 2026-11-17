@@ -14,14 +14,15 @@ import (
 )
 
 type fakeImageResolver struct {
-	image      string
-	deployment string
-	err        error
+	image          string
+	fullyRolledOut bool
+	deployment     string
+	err            error
 }
 
-func (f *fakeImageResolver) currentImage(_ context.Context, deployment string) (string, error) {
+func (f *fakeImageResolver) currentImage(_ context.Context, deployment string) (string, bool, error) {
 	f.deployment = deployment
-	return f.image, f.err
+	return f.image, f.fullyRolledOut, f.err
 }
 
 type dispatchedEvent struct {
@@ -91,6 +92,24 @@ func TestAlertHandlerIgnoresUnknownServiceAndResolvedAlert(t *testing.T) {
 	}
 	if len(dispatcher.events) != 0 {
 		t.Fatalf("alertas inválidos dispararam %d eventos", len(dispatcher.events))
+	}
+}
+
+func TestAlertHandlerSkipsAlreadyRolledOutDeployment(t *testing.T) {
+	images := &fakeImageResolver{image: "registry/auth-service:release-2", fullyRolledOut: true}
+	dispatcher := &fakeDispatcher{}
+	handler := &alertHandler{images: images, dispatcher: dispatcher}
+	body := `{"alerts":[{"status":"firing","labels":{"alertname":"RollbackVersaoDeDeploy","namespace":"toggle-mult","deployment":"auth-service"}}]}`
+	req := httptest.NewRequest(http.MethodPost, "/alerts", strings.NewReader(body))
+	resp := httptest.NewRecorder()
+
+	handler.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusAccepted {
+		t.Fatalf("status = %d, esperado %d", resp.Code, http.StatusAccepted)
+	}
+	if len(dispatcher.events) != 0 {
+		t.Fatalf("deployment já recuperado disparou %d rollbacks", len(dispatcher.events))
 	}
 }
 
@@ -169,7 +188,7 @@ func TestKubernetesImageResolverReadsDeploymentImage(t *testing.T) {
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Body: io.NopCloser(strings.NewReader(
-				`{"spec":{"template":{"spec":{"containers":[{"name":"auth-service","image":"registry/auth-service:v2"}]}}}}`,
+				`{"spec":{"replicas":1,"template":{"spec":{"containers":[{"name":"auth-service","image":"registry/auth-service:v2"}]}}},"status":{"replicas":1,"updatedReplicas":1,"readyReplicas":1,"availableReplicas":1}}`,
 			)),
 			Header:  make(http.Header),
 			Request: r,
@@ -186,11 +205,14 @@ func TestKubernetesImageResolverReadsDeploymentImage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	image, err := kubeClient.getImage(req)
+	image, fullyRolledOut, err := kubeClient.getImage(req)
 	if err != nil {
 		t.Fatalf("getImage falhou: %v", err)
 	}
 	if image != "registry/auth-service:v2" {
 		t.Fatalf("imagem = %q", image)
+	}
+	if !fullyRolledOut {
+		t.Fatal("esperava Deployment totalmente atualizado e saudável")
 	}
 }
